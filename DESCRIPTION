@@ -7,7 +7,7 @@ Authors@R:
   person(given = "Russell",
          family = "Almond",
          role = c("aut", "cre"),
-         email = "ralmond@fsu.edu",
+         email = c("ralmond@fsu.edu","russell.g.almond@gmail.com"),
          comment = c(ORCID = "0000-0002-8876-9337"))
 Maintainer: Russell G. Almond (russell.g.almond@gmail.com)
 Description: Implements simple filtering algorithms for item response theory (IRT)
@@ -26,3 +26,6 @@ Suggests:
   rmarkdown,
   testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+
