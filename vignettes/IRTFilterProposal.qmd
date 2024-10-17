@@ -1,0 +1,161 @@
+---
+Title: "Filters for IRT models with data collected across time"
+Author: 
+  Russell Almond 
+  Andrew Krumm 
+  Blaire Kubie Carpenter
+  Jiawei Li 
+  Elham Tajik
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{IRT Filter Proposal"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+---{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment= "#>")
+---
+
+_This is a proposal which was submitted to NCME_.
+
+## Abstract
+
+This paper develops time-series filtering methods for
+unidimensional item response theory (IRT), building analogs of the  weighted moving average,
+the exponential filter and state space models (e.g., the Kalman
+filter).  This method is applied to a data set tracking the
+performance of surgical residents across time.
+
+
+## Summary
+
+Item response theory (IRT) typically assumes that the ability of the
+subjects is constant across the measurement period.  When 
+measurements are made over weeks or months, the ability is
+expected to change.  As the amount of information available at any
+time is limited, there is a need to pool evidence across time.
+
+As an example, consider a surgical residency program, where
+residents are given a rating about their performance after each
+procedure they assist with.  The supervisors must periodically
+summarize the residents' performance, giving more weight to more
+recent observations.
+
+### Moving Average
+
+Consider a time series $X_1, X_2, ...$ measured at times $t_1, t_2,
+...$, and let $h(\mathbf{X},t^*)$ be the estimated value at time
+$t^*$.  Let $w(t,t^*)$ be weights which sum to one across
+all time points.  The _(weighted) moving average_ estimate is
+
+$$ h(\mathbf{X},t^*) = \sum_i w(t_i,t^*) X_i \ .$$
+
+The time interval with non-zero weights is the _window_ (e.g., all
+observations within 3 months).  In a _square_ window, the weights are
+one for all observations within the window.  Tapered windows offer
+lower weights farther away from the target time (many different
+tapering mechanisms have been proposed). If the window only contains
+observations before the target time, it is _causal_.  Non-causal
+filters are used to smooth past values, for visualizing the trajectory.
+
+Let $\theta_i$ be the ability and $Y_i$ be the response value at the
+$i$th measurement occasion, and let $X_i(\theta) = \log f(Y_i|\theta)$.
+Furthermore, let $X_0 = \log f(\theta)$ be the initial population
+distribution of abilities and pick a
+value for $t_0<t_1$.  Then $h(\mathbf{Y},t^*,\theta)$ is a weighted
+log posterior, where the likelihood contribution for
+each element is ${f(Y_i|\theta)}^{w(t_1,t^*)}$.
+
+This function can be approximated by evaluating it at quadrature
+points $\theta^*_1, \ldots, \theta^*_K$.  The maximum a posteriori
+(likelihood) estimate for ability at Time $t^*$ is $\arg 
+\max_{\theta} h(\mathbf{Y},t^*,\theta)$.  To calculate the expected
+a posteriori value, define the normalization constant $C=\sum_k
+h(\mathbf{Y},t^*,\theta^*_k)$.  Then define:
+
+$$ \overline{h(\mathbf{Y},t^*)} = \sum_k h(\mathbf{Y},t^*,\theta^*_k)/C
+\theta^*_k \ .$$
+
+Neither of these estimates depend on the sum of the weights.
+Scale $w(t,t^*)$ to vary between 0 and 1, where 0 represents no
+weight given to the observation at Time $t$, and 1 represents full
+weight.
+
+### Exponential filter
+
+Select a constant $0 < \lambda < 1$, and set $w(t,t^*) =
+\lambda^{t^*-t}$ if $t < t^*$ and 0 otherwise.  With these exponential
+weights, the _exponential filter_ can be calculated recursively by setting
+$h(\mathbf{Y},t_0,\theta) = \log f(\theta)$, and calculating filter
+version through the recursive equation:
+
+$$h(\mathbf{Y},t_i,\theta) = \log f(Y_i|\theta) +
+\lambda^{t_i - t_{i-1}} h(\mathbf{Y},t_{i-1},\theta) \ .$$
+
+Because the exponential filter can be calculated
+recursively, only the current value for $h(\mathbf{Y},t_i,\theta)$
+needs to be saved; the log likelihood can be updated as each new
+observation is received.
+
+### State Space Models and Kalman Filters
+
+A natural model for assessments across time is the state space, or
+hidden Markov model (Figure 1).  The nodes in the top row represent
+the value of the ability variable at each measurement occasion, and
+the bottom row represents the observed outcomes from that measurement.
+The vertical arrows represent the likelihoods of the observations,
+$f(Y_i|\theta_i)$, which can be standard IRT models.  The horizontal
+arrows represent how the latent variable changes over time,
+$g(\theta_i|\theta_{i-1})$.
+
+There are many potential models for the change process; a simple
+starting point is a Brownian motion process, which assumes that the
+changes are normally distributed with variance proportional to the
+time:
+
+$$\theta_i | \theta_{i-1} \sim N \left(\theta_{i-1} +b_i(t_i-t_{i-1}),
+  \sigma^2(t_i-t_{i-l}) \right) \ ,$$
+
+where $b_i$ is the average growth rate between Times $t_{i-1}$ and
+$t_i$.  If the $b_i$'s are zero, then this is a stationary process.
+If the likelihoods for the observations also follow the normal
+distribution, this is a Kalman filter.
+
+Let $f_1(\theta_1|\mathbf{Y})$ be the initial ability distribution in
+the population of interest.  Then the other probabilities are
+calculated through the recurrance relation: 
+
+$$ f_{i+1}(\theta_{i+1}|\mathbf{Y}) = \int f(\theta_{i+1}|\theta_i)
+f(Y_i|\theta_i) f_i(\theta_i|\mathbf{Y}) d\theta_i \ .$$
+
+If a fixed quadrature approximation is used in the IRT model, then
+this becomes a matrix equation.  Let $p_{ik} =
+f_i(\theta_i=\theta^*_k|\mathbf{Y})$, so that $\mathbf{p}_i$ is the vector of
+probability estimates at time $t_i$, and let $f(Y_i|\mathbf{\theta})$
+be the vector of likelihoods for the observation $Y_i$ evaluated at
+the quadrature points.  Finally, let $g_{i,kk'} =
+g(\theta_{i+1}=\theta^*_k | \theta_i = \theta^*_{k'})$.  The the recursive
+equation becomes:
+
+$$ \mathbf{p}_{i+1} = \mathbf{G}_i f(Y_i|\mathbf{\theta})\mathbf{p}_i
+\ .$$
+
+If the measurement time intervals are known ahead of time, the matrix
+$G_i$ can be precomputed.
+
+### Proposed Experiement
+
+The final version of the paper will use these IRT filters to analyze
+data from the Society for Improving Medical Professional Learning's (SIMPL) workplace-based assessment system, as well
+as simulated data.  It will look at weighted averages using square and
+tapered windows, the exponential filter, and state space models with
+and without stationarity assumptions.
+
+## Figures
+
+
+![State Space/Hidden Markov Model](/home/ralmond/ralmond1/Projects/epa.scoring/docs/hmm.png)
+
+
+

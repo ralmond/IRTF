@@ -1,0 +1,27 @@
+digraph hmm {
+  
+  rankdir="TB"
+
+  q0, q1, q2, q3;
+  q_[label="..."];
+  
+  Y0[label="",style="invis"];
+  Y1, Y2, Y3; 
+  Y_[label="..."];
+  
+  subgraph {
+    rank="same"
+    q0 -> q1 -> q2 -> q3 -> q_;
+  }
+  
+  subgraph {
+    rank="same"
+    Y0 -> Y1 -> Y2 -> Y3 -> Y_ [style="invis"]
+  }
+  
+  q0 -> Y0 [style="invis"]
+  q1 -> Y1
+  q2 -> Y2
+  q3 -> Y3
+
+}
