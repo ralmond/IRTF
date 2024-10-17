@@ -2,9 +2,11 @@ Package: IRTF
 Type: Package
 Title: IRT Filter for Temporal Scoring
 Version: 0.1.0
-Author: Who wrote it
+Author: Russell G. Almond
 Maintainer: Russell G. Almond (russell.g.almond@gmail.com)
 Description: Implements simple filtering algorithms for IRT
 License: MIT License
 Encoding: UTF-8
 LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
